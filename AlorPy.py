@@ -1974,13 +1974,18 @@ class AlorPy:
         :param response: Ответ JSON
         :return: JSON, текст, None в случае веб ошибки
         """
-        try:
-            json_response = loads(response)  # Декодируем JSON в справочник, возвращаем его. Ошибки также могут приходить в виде JSON
-        except JSONDecodeError:  # Если произошла ошибка при декодировании JSON, например, при удалении заявок
-            return response  # то возвращаем значение в виде текста
+        
+        if isinstance(response,dict):
+            json_response = response
+        else:
+            try:
+                json_response = loads(response)  # Декодируем JSON в справочник, возвращаем его. Ошибки также могут приходить в виде JSON
+            except JSONDecodeError:  # Если произошла ошибка при декодировании JSON, например, при удалении заявок
+                self.logger.error(f"Error at decoding broker response {response}")
+                return response  # то возвращаем значение в виде текста
         http_code = json_response['httpCode']  # Код 200 или ошибки
         if http_code != 200:  # Если в результате запроса произошла ошибка
-            self.on_error(f'Ошибка сервера: {http_code} {response["message"]}')  # Событие ошибки
+            self.on_error(json_response)  # Событие ошибки
             return None  # то возвращаем пустое значение
         return json_response  # Возвращаем JSON
 
